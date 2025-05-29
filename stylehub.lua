@@ -1,127 +1,134 @@
---// ShadowStyle Hub - Korblox & Headless v2
+--// ShadowStyle Hub V3 - Funktionierende Korblox & Headless
 --// Entwickler: Flo (hecker_123huh) & BobderBaumeister2525
---// Funktioniert in allen Spielen - Executor erforderlich
+--// Funktioniert in allen Spielen - sichtbar für andere
 
 local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
+local InsertService = game:GetService("InsertService")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local HumanoidDescription = Humanoid:WaitForChild("HumanoidDescription")
+local function applyRealAsset(assetId, partName)
+    pcall(function()
+        local asset = InsertService:LoadAsset(assetId)
+        if not asset then return end
+        local model = asset:FindFirstChildOfClass("Accessory") or asset:FindFirstChildOfClass("Model")
+        if not model then return end
 
---// GUI
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "ShadowStyleHub"
+        -- Entferne vorhandenes Zielpart
+        if Character:FindFirstChild(partName) then
+            Character[partName]:Destroy()
+        end
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 200, 0, 150)
-Frame.Position = UDim2.new(0.4, 0, 0.4, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
-
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 8)
-
-local Close = Instance.new("TextButton", Frame)
-Close.Size = UDim2.new(0, 30, 0, 30)
-Close.Position = UDim2.new(1, -35, 0, 5)
-Close.Text = "X"
-Close.TextColor3 = Color3.new(1, 1, 1)
-Close.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-Close.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
-local KorbloxBtn = Instance.new("TextButton", Frame)
-KorbloxBtn.Size = UDim2.new(1, -20, 0, 30)
-KorbloxBtn.Position = UDim2.new(0, 10, 0, 50)
-KorbloxBtn.Text = "Korblox"
-KorbloxBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-KorbloxBtn.TextColor3 = Color3.new(1, 1, 1)
-
-local HeadlessBtn = Instance.new("TextButton", Frame)
-HeadlessBtn.Size = UDim2.new(1, -20, 0, 30)
-HeadlessBtn.Position = UDim2.new(0, 10, 0, 90)
-HeadlessBtn.Text = "Headless"
-HeadlessBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-HeadlessBtn.TextColor3 = Color3.new(1, 1, 1)
-
---// Funktionen
-local function applyKorblox(side)
-    if side == "left" then
-        HumanoidDescription.LeftLeg = 139607673
-    elseif side == "right" then
-        HumanoidDescription.RightLeg = 139607718
-    end
-    Humanoid:ApplyDescription(HumanoidDescription)
+        if model:IsA("Accessory") then
+            Character.Humanoid:AddAccessory(model)
+        elseif model:IsA("Model") then
+            for _, obj in pairs(model:GetChildren()) do
+                if obj:IsA("MeshPart") or obj:IsA("Part") then
+                    obj.Name = partName
+                    obj.Anchored = false
+                    obj.CanCollide = false
+                    obj.Parent = Character
+                end
+            end
+        end
+    end)
 end
 
-local function applyHeadless(normal)
-    if normal then
-        HumanoidDescription.Head = 15093053680 -- Headless Head (sichtbar für alle mit R15)
-    else
-        HumanoidDescription.Head = 16580493236 -- Korblox Deathwalker Kopf (Fake mit Augen)
+local function removeHead()
+    if Character:FindFirstChild("Head") then
+        Character.Head:Destroy()
     end
-    Humanoid:ApplyDescription(HumanoidDescription)
+    if Character:FindFirstChild("face") then
+        Character.face:Destroy()
+    end
 end
 
---// Sub-Menüs
-KorbloxBtn.MouseButton1Click:Connect(function()
-    local korMenu = Instance.new("Frame", Frame)
-    korMenu.Size = UDim2.new(0, 180, 0, 80)
-    korMenu.Position = UDim2.new(0, 10, 0, 130)
-    korMenu.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    local corner = Instance.new("UICorner", korMenu)
-    corner.CornerRadius = UDim.new(0, 6)
+-- GUI Setup
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 240, 0, 160)
+frame.Position = UDim2.new(0.35, 0, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
-    local leftBtn = Instance.new("TextButton", korMenu)
-    leftBtn.Size = UDim2.new(0.5, -5, 0, 30)
-    leftBtn.Position = UDim2.new(0, 0, 0, 10)
-    leftBtn.Text = "Linkes Bein"
-    leftBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    leftBtn.TextColor3 = Color3.new(1, 1, 1)
-    leftBtn.MouseButton1Click:Connect(function()
-        applyKorblox("left")
+local close = Instance.new("TextButton", frame)
+close.Text = "X"
+close.Position = UDim2.new(1, -35, 0, 5)
+close.Size = UDim2.new(0, 30, 0, 30)
+close.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+close.TextColor3 = Color3.new(1,1,1)
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+local korBtn = Instance.new("TextButton", frame)
+korBtn.Size = UDim2.new(0.9, 0, 0, 40)
+korBtn.Position = UDim2.new(0.05, 0, 0, 50)
+korBtn.Text = "Korblox"
+korBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+korBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local headBtn = Instance.new("TextButton", frame)
+headBtn.Size = UDim2.new(0.9, 0, 0, 40)
+headBtn.Position = UDim2.new(0.05, 0, 0, 100)
+headBtn.Text = "Headless"
+headBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+headBtn.TextColor3 = Color3.new(1, 1, 1)
+
+korBtn.MouseButton1Click:Connect(function()
+    local menu = Instance.new("Frame", frame)
+    menu.Size = UDim2.new(0.9, 0, 0, 60)
+    menu.Position = UDim2.new(0.05, 0, 0, 150)
+    menu.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 6)
+
+    local left = Instance.new("TextButton", menu)
+    left.Size = UDim2.new(0.5, -5, 0, 25)
+    left.Position = UDim2.new(0, 0, 0, 5)
+    left.Text = "Linkes Bein"
+    left.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    left.TextColor3 = Color3.new(1, 1, 1)
+    left.MouseButton1Click:Connect(function()
+        applyRealAsset(139607673, "LeftLeg")
     end)
 
-    local rightBtn = Instance.new("TextButton", korMenu)
-    rightBtn.Size = UDim2.new(0.5, -5, 0, 30)
-    rightBtn.Position = UDim2.new(0.5, 5, 0, 10)
-    rightBtn.Text = "Rechtes Bein"
-    rightBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    rightBtn.TextColor3 = Color3.new(1, 1, 1)
-    rightBtn.MouseButton1Click:Connect(function()
-        applyKorblox("right")
+    local right = Instance.new("TextButton", menu)
+    right.Size = UDim2.new(0.5, -5, 0, 25)
+    right.Position = UDim2.new(0.5, 5, 0, 5)
+    right.Text = "Rechtes Bein"
+    right.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    right.TextColor3 = Color3.new(1, 1, 1)
+    right.MouseButton1Click:Connect(function()
+        applyRealAsset(139607718, "RightLeg")
     end)
 end)
 
-HeadlessBtn.MouseButton1Click:Connect(function()
-    local headMenu = Instance.new("Frame", Frame)
-    headMenu.Size = UDim2.new(0, 180, 0, 80)
-    headMenu.Position = UDim2.new(0, 10, 0, 130)
-    headMenu.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    local corner = Instance.new("UICorner", headMenu)
-    corner.CornerRadius = UDim.new(0, 6)
+headBtn.MouseButton1Click:Connect(function()
+    local menu = Instance.new("Frame", frame)
+    menu.Size = UDim2.new(0.9, 0, 0, 60)
+    menu.Position = UDim2.new(0.05, 0, 0, 150)
+    menu.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", menu).CornerRadius = UDim.new(0, 6)
 
-    local normalBtn = Instance.new("TextButton", headMenu)
-    normalBtn.Size = UDim2.new(0.5, -5, 0, 30)
-    normalBtn.Position = UDim2.new(0, 0, 0, 10)
-    normalBtn.Text = "Normal"
-    normalBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    normalBtn.TextColor3 = Color3.new(1, 1, 1)
-    normalBtn.MouseButton1Click:Connect(function()
-        applyHeadless(true)
+    local normal = Instance.new("TextButton", menu)
+    normal.Size = UDim2.new(0.5, -5, 0, 25)
+    normal.Position = UDim2.new(0, 0, 0, 5)
+    normal.Text = "Normal"
+    normal.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    normal.TextColor3 = Color3.new(1, 1, 1)
+    normal.MouseButton1Click:Connect(function()
+        applyRealAsset(15093053680, "Head")
     end)
 
-    local eyesBtn = Instance.new("TextButton", headMenu)
-    eyesBtn.Size = UDim2.new(0.5, -5, 0, 30)
-    eyesBtn.Position = UDim2.new(0.5, 5, 0, 10)
-    eyesBtn.Text = "Blaue Augen"
-    eyesBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    eyesBtn.TextColor3 = Color3.new(1, 1, 1)
-    eyesBtn.MouseButton1Click:Connect(function()
-        applyHeadless(false)
+    local blue = Instance.new("TextButton", menu)
+    blue.Size = UDim2.new(0.5, -5, 0, 25)
+    blue.Position = UDim2.new(0.5, 5, 0, 5)
+    blue.Text = "Blaue Augen"
+    blue.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    blue.TextColor3 = Color3.new(1, 1, 1)
+    blue.MouseButton1Click:Connect(function()
+        removeHead()
+        applyRealAsset(16580493236, "Head")
     end)
 end)
